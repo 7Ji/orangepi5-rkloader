@@ -34,8 +34,10 @@ jobs:
       - name: Extract and remove archives
         id: extract-archives
         run: |
-          for i in *.tar.gz; do
-            tar -xvf $i &
+          for i in rkbin.git u-boot-orangepi.git gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu; do
+            if [[ -f $i.tar.gz ]]; then
+              tar -xvf $i.tar.gz &
+            fi
           done
           wait
           rm *.tar.gz
