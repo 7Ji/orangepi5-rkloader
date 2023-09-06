@@ -85,7 +85,7 @@ rm -rf out
 mkdir out
 export ARCH=aarch64
 export CROSS_COMPILE=aarch64-linux-gnu-
-cross_path="$(readlink -f ${toolchain})/bin:$PATH"
+export PATH="$(readlink -f ${toolchain})/bin:$PATH"
 for config in "${configs[@]}"; do
     if [[ ! -d build ]]; then
         mkdir build
@@ -93,11 +93,9 @@ for config in "${configs[@]}"; do
     fi
     echo "Configuring for ${config}"
     make -C build \
-        PATH="${cross_path}" \
         orangepi_${config}_defconfig
     echo "Building for ${config}"
     make -C build \
-        PATH="${cross_path}" \
         BL31="${bl31}" \
         -j$(nproc) \
         spl/u-boot-spl.bin u-boot.dtb u-boot.itb
