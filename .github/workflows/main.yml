@@ -67,11 +67,32 @@ jobs:
         with:
           path: u-boot-orangepi.git.tar.gz
           key: ${{ runner.os }}-uboot-${{ hashFiles('u-boot-orangepi.git.tar.gz') }}
-      - name: Upload a Build Artifact
+      - name: Upload all rkloader
         uses: actions/upload-artifact@v3.1.2
         with:
+          name: all
           path: out/*
           if-no-files-found: error
+      - name: Upload rkloader for 5
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: opi5
+          path: out/rkloader-3588-orangepi-5-*
+      - name: Upload rkloader for 5 (SATA)
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: opi5sata
+          path: out/rkloader-3588-orangepi-5_sata-*
+      - name: Upload rkloader for 5b
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: opi5b
+          path: out/rkloader-3588-orangepi-5b-*
+      - name: Upload rkloader for 5-plus
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: opi5plus
+          path: out/rkloader-3588-orangepi-5_plus-*
       - name: Report build versions
         run: cat versions
       
