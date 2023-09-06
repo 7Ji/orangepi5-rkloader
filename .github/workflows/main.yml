@@ -1,0 +1,76 @@
+name: Build rkloaders for Orange Pi 5 / 5B / 5+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.2
+      - name: Restore cached toolchain
+        id: cache-restore-toolchain
+        uses: actions/cache/restore@v3
+        with:
+          path: gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.gz
+          key: ${{ runner.os }}-toolchain
+          restore-keys: ${{ runner.os }}-toolchain
+      - name: Restore cached rkbin repo
+        id: cache-restore-rkbin
+        uses: actions/cache/restore@v3
+        with:
+          path: rkbin.git.tar.gz
+          key: ${{ runner.os }}-rkbin
+          restore-keys: ${{ runner.os }}-rkbin
+      - name: Restore cached u-boot repo
+        id: cache-restore-uboot
+        uses: actions/cache/restore@v3
+        with:
+          path: u-boot-orangepi.git.tar.gz
+          key: ${{ runner.os }}-uboot
+          restore-keys: ${{ runner.os }}-uboot
+      - name: Extract and remove archives
+        id: extract-archives
+        run: |
+          for i in *.tar.gz; do
+            tar -xvf $i &
+          done
+          wait
+          rm *.tar.gz
+      - name: Build
+        run: ./rkloader.sh
+      - name: Pack resources into archives
+        id: pack-archives
+        run: |
+          for i in rkbin.git u-boot-orangepi.git gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu; do
+            tar -cvf $i.tar.gz $i &
+          done
+          wait
+      - name: Save toolchain
+        id: cache-save-toolchain
+        uses: actions/cache/save@v3
+        with:
+          path: gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.gz
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.gz') }}
+      - name: Save rkbin repo
+        id: cache-save-rkbin
+        uses: actions/cache/save@v3
+        with:
+          path: rkbin.git.tar.gz
+          key: ${{ runner.os }}-rkbin-${{ hashFiles('rkbin.git.tar.gz') }}
+      - name: Save u-boot repo
+        id: cache-save-uboot
+        uses: actions/cache/save@v3
+        with:
+          path: u-boot-orangepi.git.tar.gz
+          key: ${{ runner.os }}-uboot-${{ hashFiles('u-boot-orangepi.git.tar.gz') }}
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: out/*
+          if-no-files-found: error
+      - name: Report build versions
+        run: cat versions
+      
