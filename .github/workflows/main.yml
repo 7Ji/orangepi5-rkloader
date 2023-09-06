@@ -40,7 +40,6 @@ jobs:
             fi
           done
           wait
-          rm *.tar.gz
       - name: Build
         run: ./rkloader.sh
       - name: Pack resources into archives
