@@ -27,7 +27,7 @@ for git_url in "${git_urls[@]}"; do
         exit 1
     fi
     echo "Updating '${git_dir}' <= '${git_url}'"
-    # git --git-dir "${git_dir}" remote update --prune
+    git --git-dir "${git_dir}" remote update --prune
     i=$(( i + 1 ))
 done
 
