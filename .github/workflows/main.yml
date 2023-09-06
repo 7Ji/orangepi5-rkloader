@@ -1,15 +1,18 @@
-name: Build rkloaders for Orange Pi 5 / 5B / 5+
+name: Build rkloaders for Orange Pi 5 / 5B / 5+ nightly
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3.5.2
+      - name: Prepare deps
+        run: |
+          sudo apt update
+          sudo apt install \
+            device-tree-compiler
       - name: Restore cached toolchain
         id: cache-restore-toolchain
         uses: actions/cache/restore@v3
