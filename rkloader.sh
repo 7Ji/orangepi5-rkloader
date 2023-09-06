@@ -101,8 +101,13 @@ for config in "${configs[@]}"; do
         spl/u-boot-spl.bin u-boot.dtb u-boot.itb
     build/tools/mkimage -n rk3588 -T rksd -d ${ddr}:build/spl/u-boot-spl.bin build/idbloader.img
     out=out/rkloader-3588-orangepi-"${config}-${ver}".img
-    cat build/idbloader.img > "${out}".temp
-    dd if=build/u-boot.itb of="${out}".temp seek=16320 # 16K - 64B
+    tempout="${out}".temp
+    truncate -s 4M "${tempout}"
+    /sbin/parted -s "${tempout}" mklabel gpt
+    /sbin/parted -s "${tempout}" unit s mkpart idbloader 64 1023
+    /sbin/parted -s "${tempout}" unit s mkpart uboot 1024 7167
+    dd if=build/idbloader.img of="${tempout}" seek=64 conv=notrunc
+    dd if=build/u-boot.itb of="${tempout}" seek=1024 conv=notrunc
     mv "${out}"{.temp,}
     rm -rf build
 done
