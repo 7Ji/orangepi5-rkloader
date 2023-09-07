@@ -10,6 +10,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+     - name: Download artifacts
+       uses: actions/download-artifact@v3
+       with:
+         name: all
+     - name: Display structure of downloaded files
+       run: ls -R
      - name: Release
        uses: softprops/action-gh-release@v1
        with:
