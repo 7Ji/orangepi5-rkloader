@@ -1,11 +1,9 @@
-name: Build rkloaders for Orange Pi 5 / 5B / 5+ nightly
+name: Build rkloaders for Orange Pi 5 / 5B / 5+
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  schedule:
-    - cron: '0 2 * * *' # run at 2 AM UTC
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           name: all
-          path: out/*
+          path: out/* versions
           if-no-files-found: error
       - name: Upload rkloader for 5
         uses: actions/upload-artifact@v3.1.2
