@@ -78,6 +78,11 @@ echo "All configs for opi 5 series: ${configs[@]}"
 # Get u-boot version
 uboot_ver=$(git --git-dir u-boot-orangepi.git rev-parse --short "${uboot_branch}")
 ver="bl31-${bl31_ver}-ddr-${ddr_ver}-uboot-${uboot_ver}"
+{
+    echo "u-boot version: $(git --git-dir u-boot-orangepi.git rev-parse "${uboot_branch}")"
+    echo "BL31 version: ${bl31_ver}"
+    echo "DDR version: ${ddr_ver}"
+} > versions
 
 # Build
 
@@ -120,9 +125,3 @@ done
 tar -cf out.tar "${outs[@]}"
 rm -rf out
 tar -xf out.tar
-
-{
-    echo "u-boot version: ${uboot_ver}"
-    echo "BL31 version: ${bl31_ver}"
-    echo "DDR version: ${ddr_ver}"
-} > versions
