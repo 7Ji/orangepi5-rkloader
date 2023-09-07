@@ -41,7 +41,7 @@ if [[ ! -d ${toolchain} ]]; then
     do
         rm -rf "${toolchain}.temp"
         mkdir "${toolchain}.temp"
-        if wget "${mirror}/_toolchain/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.xz" -O - |
+        if wget "${mirror}/_toolchain/${toolchain}.tar.xz" -O - |
             tar -C "${toolchain}.temp" --strip-components 1 -xJ; then break; fi
     done
     mv "${toolchain}"{.temp,}
@@ -81,12 +81,17 @@ ver="bl31-${bl31_ver}-ddr-${ddr_ver}-uboot-${uboot_ver}"
 
 # Build
 
-rm -rf out
-mkdir out
+mkdir -p out
+outs=()
 export ARCH=aarch64
 export CROSS_COMPILE=aarch64-linux-gnu-
 export PATH="$(readlink -f ${toolchain})/bin:$PATH"
 for config in "${configs[@]}"; do
+    out=out/rkloader-3588-orangepi-"${config}-${ver}".img
+    outs+=("${out}")
+    if [[ -f "${out}" ]]; then
+        continue
+    fi
     if [[ ! -d build ]]; then
         mkdir build
         git --git-dir u-boot-orangepi.git --work-tree build checkout -f "${uboot_branch}"
@@ -100,7 +105,6 @@ for config in "${configs[@]}"; do
         -j$(nproc) \
         spl/u-boot-spl.bin u-boot.dtb u-boot.itb
     build/tools/mkimage -n rk3588 -T rksd -d ${ddr}:build/spl/u-boot-spl.bin build/idbloader.img
-    out=out/rkloader-3588-orangepi-"${config}-${ver}".img
     tempout="${out}".temp
     truncate -s 4M "${tempout}"
     /sbin/parted -s "${tempout}" mklabel gpt
@@ -111,6 +115,11 @@ for config in "${configs[@]}"; do
     mv "${out}"{.temp,}
     rm -rf build
 done
+
+# Yeah this looks dumb but it's simpler than some more dumb loops
+tar -cf out.tar "${outs[@]}"
+rm -rf out
+tar -xf out.tar
 
 {
     echo "u-boot version: ${uboot_ver}"
