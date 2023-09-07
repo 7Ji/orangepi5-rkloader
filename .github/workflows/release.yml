@@ -1,5 +1,6 @@
 name: Release rkloaders for Orange Pi 5 / 5B / 5+ nightly
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 2 * * *' # run at 2 AM UTC
 jobs:
