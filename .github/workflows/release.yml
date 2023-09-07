@@ -6,12 +6,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-     - name: Download artifacts
-       uses: actions/download-artifact@v3
-       with:
-         name: all
-     - name: Display structure of downloaded files
-       run: ls -R
+     - name: Build
+       uses: ./.github/workflows/build.yml
      - name: Release
        uses: softprops/action-gh-release@v1
        with:
@@ -19,4 +15,4 @@ jobs:
          draft: true
          name: Nightly
          tag_name: nightly
-         files: rkloader-3588-orangepi-5*
+         files: out/rkloader-3588-orangepi-5*

@@ -1,5 +1,6 @@
 name: Build rkloaders for Orange Pi 5 / 5B / 5+
 on:
+  workflow_call:
   push:
     branches: [ "master" ]
   pull_request:
