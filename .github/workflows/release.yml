@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *' # run at 2 AM UTC
+permissions:
+  contents: write
 jobs:
   build:
     uses: ./.github/workflows/build.yml
