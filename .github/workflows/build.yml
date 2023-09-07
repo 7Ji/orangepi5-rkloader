@@ -38,8 +38,8 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: out.tar.gz
-          key: ${{ runner.os }}-uboot
-          restore-keys: ${{ runner.os }}-uboot
+          key: ${{ runner.os }}-rkloader
+          restore-keys: ${{ runner.os }}-rkloader
       - name: Extract and remove archives
         run: |
           for i in rkbin.git u-boot-orangepi.git gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu out; do
@@ -75,7 +75,7 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: out.tar.gz
-          key: ${{ runner.os }}-rkbin-${{ hashFiles('out.tar.gz') }}
+          key: ${{ runner.os }}-rkloader-${{ hashFiles('out.tar.gz') }}
       - name: Upload all rkloader
         uses: actions/upload-artifact@v3.1.2
         with:
