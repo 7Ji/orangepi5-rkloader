@@ -15,7 +15,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install \
-            device-tree-compiler
+            device-tree-compiler \
             python2
       - name: Restore cached toolchain
         uses: actions/cache/restore@v3
