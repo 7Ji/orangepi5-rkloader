@@ -85,7 +85,10 @@ ver="bl31-${bl31_ver}-ddr-${ddr_ver}-uboot-${uboot_ver}"
 } > versions
 
 # Build
-
+table='label: gpt
+first-lba: 34
+start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
+start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 mkdir -p out
 outs=()
 export ARCH=aarch64
@@ -112,9 +115,7 @@ for config in "${configs[@]}"; do
     build/tools/mkimage -n rk3588 -T rksd -d ${ddr}:build/spl/u-boot-spl.bin build/idbloader.img
     tempout="${out}".temp
     truncate -s 4M "${tempout}"
-    /sbin/parted -s "${tempout}" mklabel gpt
-    /sbin/parted -s "${tempout}" unit s mkpart idbloader 64 1023
-    /sbin/parted -s "${tempout}" unit s mkpart uboot 1024 7167
+    sfdisk "${tempout}" <<< "${table}"
     dd if=build/idbloader.img of="${tempout}" seek=64 conv=notrunc
     dd if=build/u-boot.itb of="${tempout}" seek=1024 conv=notrunc
     mv "${out}"{.temp,}
