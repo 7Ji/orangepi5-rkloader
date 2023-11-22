@@ -106,5 +106,5 @@ jobs:
           name: opi5plus
           path: out/rkloader-3588-orangepi-5_plus-*
       - name: Report build versions
-        run: cat versions
+        run: cat note.md
       
