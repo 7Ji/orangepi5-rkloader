@@ -26,4 +26,4 @@ jobs:
           artifacts: out/*
           allowUpdates: true
           removeArtifacts: true
-          bodyFile: node.md
+          bodyFile: note.md
