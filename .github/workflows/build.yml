@@ -83,7 +83,7 @@ jobs:
           name: all
           path: |
             out/*
-            versions
+            note.md
           if-no-files-found: error
       - name: Upload rkloader for 5
         uses: actions/upload-artifact@v3.1.2
