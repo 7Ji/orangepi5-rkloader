@@ -78,11 +78,16 @@ echo "All configs for opi 5 series: ${configs[@]}"
 # Get u-boot version
 uboot_ver=$(git --git-dir u-boot-orangepi.git rev-parse --short "${uboot_branch}")
 ver="bl31-${bl31_ver}-ddr-${ddr_ver}-uboot-${uboot_ver}"
-{
-    echo "u-boot version: $(git --git-dir u-boot-orangepi.git rev-parse "${uboot_branch}")"
-    echo "BL31 version: ${bl31_ver}"
-    echo "DDR version: ${ddr_ver}"
-} > versions
+echo "**u-boot version**: \`$(git --git-dir u-boot-orangepi.git rev-parse "${uboot_branch}")\`
+
+**BL31 version**: \`${bl31_ver}\`
+
+**DDR version**: \`${ddr_ver}\`
+
+---
+
+sha256sums
+\`\`\`" > note.md
 
 # Build
 table='label: gpt
@@ -90,12 +95,17 @@ first-lba: 34
 start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
 start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 mkdir -p out
+rm -f out/list
 outs=()
+pids_gzip=()
 export ARCH=aarch64
 export CROSS_COMPILE=aarch64-linux-gnu-
 export PATH="$(readlink -f ${toolchain})/bin:$PATH"
 for config in "${configs[@]}"; do
-    out=out/rkloader-3588-orangepi-"${config}-${ver}".img
+    name=rkloader-3588-orangepi-"${config}-${ver}".img
+    echo "${config}:${name}".gz >> out/list
+    out_raw=out/"${name}"
+    out="${out_raw}".gz
     outs+=("${out}")
     if [[ -f "${out}" ]]; then
         continue
@@ -113,16 +123,25 @@ for config in "${configs[@]}"; do
         -j$(nproc) \
         spl/u-boot-spl.bin u-boot.dtb u-boot.itb
     build/tools/mkimage -n rk3588 -T rksd -d ${ddr}:build/spl/u-boot-spl.bin build/idbloader.img
-    tempout="${out}".temp
-    truncate -s 4M "${tempout}"
-    sfdisk "${tempout}" <<< "${table}"
-    dd if=build/idbloader.img of="${tempout}" seek=64 conv=notrunc
-    dd if=build/u-boot.itb of="${tempout}" seek=1024 conv=notrunc
-    mv "${out}"{.temp,}
+    rm -f "${out_raw}"
+    truncate -s 4M "${out_raw}"
+    sfdisk "${out_raw}" <<< "${table}"
+    dd if=build/idbloader.img of="${out_raw}" seek=64 conv=notrunc
+    dd if=build/u-boot.itb of="${out_raw}" seek=1024 conv=notrunc
+    gzip -9 "${out_raw}" &
+    pids_gzip+=($!)
     rm -rf build
 done
 
-# Yeah this looks dumb but it's simpler than some more dumb loops
-tar -cf out.tar "${outs[@]}"
+wait ${pids_gzip[@]}
+temp_archive=$(mktemp)
+tar -cf "${temp_archive}" "${outs[@]}" out/list
 rm -rf out
-tar -xf out.tar
+tar -xf "${temp_archive}"
+rm -f "${temp_archive}"
+
+cd out
+sha256sum * > sha256sums
+cd ..
+cat out/sha256sums >> note.md
+echo '```' >> note.md
