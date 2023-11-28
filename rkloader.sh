@@ -73,18 +73,18 @@ update_repos() {
 }
 
 deploy_toolchain_vendor() {
-    if [[ ! -d toolchain_vendor ]]; then
+    if [[ ! -d toolchain-vendor ]]; then
         echo "Deploying toolchain ${toolchain_vendor}"
         for mirror in \
             'https://redirect.armbian.com' \
             'https://mirrors.tuna.tsinghua.edu.cn/armbian-releases'
         do
-            rm -rf toolchain_vendor.temp
-            mkdir toolchain_vendor.temp
+            rm -rf toolchain-vendor.temp
+            mkdir toolchain-vendor.temp
             if wget "${mirror}/_toolchain/${toolchain_vendor}.tar.xz" -O - |
-                tar -C toolchain_vendor.temp --strip-components 1 -xJ; then break; fi
+                tar -C toolchain-vendor.temp --strip-components 1 -xJ; then break; fi
         done
-        mv toolchain_vendor{.temp,}
+        mv toolchain-vendor{.temp,}
     fi
 }
 
@@ -201,7 +201,7 @@ build_all() {
     for config in "${configs_mainline[@]}"; do
         build_common mainline "${uboot_mainline_branch}" "${config}"
     done
-    PATH="/usr/lib/ccache/bin:${PWD}/toolchain_vendor/bin:${path_preserve}"
+    PATH="/usr/lib/ccache/bin:${PWD}/toolchain-vendor/bin:${path_preserve}"
     for config in "${configs_vendor[@]}"; do
         build_common vendor "${uboot_vendor_branch}" "${config}"
     done
