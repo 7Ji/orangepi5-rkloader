@@ -135,11 +135,6 @@ sha256sums
 
 build_common() { #1 type #2 git branch #3 config
     local name=rkloader-"$1-$2-$3"-
-    mkdir build
-    git --git-dir u-boot-"$1".git --work-tree build checkout -f "$2"
-    echo "Configuring u-boot ($1) for $3..."
-    make -C build "$3"_defconfig
-    echo "Building u-boot ($1) for $3..."
     case "$1" in
     vendor) name+="${vendor_version}" ;;
     mainline) name+="${mainline_version}" ;;
@@ -152,10 +147,17 @@ build_common() { #1 type #2 git branch #3 config
     local out_raw=out/"${name}"
     local out="${out_raw}".gz
     outs+=("${out}")
+    local report_name="u-boot ($1) for $3"
     if [[ -f "${out}" ]]; then
-        echo 'Skipped'
+        echo "Skipped building ${report_name}"
+        rm -rf build
         return 0
     fi
+    mkdir build
+    git --git-dir u-boot-"$1".git --work-tree build checkout -f "$2"
+    echo "Configuring ${report_name}..."
+    make -C build "$3"_defconfig
+    echo "Building ${report_name}..."
     rm -f "${out_raw}"
     case "$1" in
     vendor)
