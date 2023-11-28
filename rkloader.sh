@@ -143,6 +143,7 @@ build_common() { #1 type #2 git branch #3 config
         return 1
         ;;
     esac
+    name+='.img'
     echo "$1:$3:${name}" >> out/list
     local out_raw=out/"${name}"
     local out="${out_raw}".gz
