@@ -151,7 +151,6 @@ build_common() { #1 type #2 git branch #3 config
     local report_name="u-boot ($1) for $3"
     if [[ -f "${out}" ]]; then
         echo "Skipped building ${report_name}"
-        rm -rf build
         return 0
     fi
     mkdir build
