@@ -18,15 +18,24 @@ git_urls=('https://github.com/'{'armbian/rkbin','orangepi-xunlong/u-boot-orangep
 git_branches=('master' "${uboot_branch}")
 i=0
 for git_url in "${git_urls[@]}"; do
-    git_dir=${git_url##*/}
+    git_dir="${git_url##*/}"
+    git_branch="${git_branches[$i]}"
     if [[ ! -d "${git_dir}" ]]; then
-        init_repo "${git_dir}" "${git_url}" "${git_branches[$i]}"
+        init_repo "${git_dir}" "${git_url}" "${git_branch}"
     fi
     if [[ ! -d "${git_dir}" ]]; then
         echo "Failed to prepare local git dir ${git_dir} from ${git_url}"
         exit 1
     fi
     echo "Updating '${git_dir}' <= '${git_url}'"
+    if [[ "${gmr}" ]]; then
+        echo "Trying 7Ji/git-mirrorer instance '${gmr}' before actual remote..."
+        git_ref=refs/heads/"${git_branch}"
+        if git --git-dir "${git_dir}" fetch "${gmr}/${git_url#https://}" "+${git_ref}:${git_ref}" --prune; then
+            i=$(( i + 1 ))
+            continue
+        fi
+    fi
     git --git-dir "${git_dir}" remote update --prune
     i=$(( i + 1 ))
 done
