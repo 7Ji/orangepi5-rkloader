@@ -183,7 +183,7 @@ build_common() { #1 type #2 git branch #3 config
         dd if=build/u-boot-rockchip.bin of="${out_raw}" seek=64 conv=notrunc
         ;;
     esac
-    gzip -9 --suffix '.gz.temp' "${out_raw}" &
+    gzip -9 --force --suffix '.gz.temp' "${out_raw}" &
     pids_gzip+=($!)
     rm -rf build
 }
@@ -213,7 +213,9 @@ finish() {
     wait ${pids_gzip[@]}
     local out
     for out in "${outs[@]}"; do
-        mv "${out}"{.temp,}
+        if [[ -e "${out}".temp ]]; then
+            mv "${out}"{.temp,}
+        fi
     done
     local temp_archive=$(mktemp)
     tar -cf "${temp_archive}" "${outs[@]}" out/list
