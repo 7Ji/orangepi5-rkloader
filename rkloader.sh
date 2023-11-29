@@ -14,6 +14,8 @@ configs_mainline=(${configs_mainline:-orangepi-5-plus-rk3588 orangepi-5-rk3588s}
 
 toolchain_vendor=${toolchain_vendor:-gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu}
 
+armbian_mirror=${armbian_mirror:-https://redirect.armbian.com}
+
 gpt_vendor='label: gpt
 first-lba: 34
 start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
@@ -75,15 +77,10 @@ update_repos() {
 deploy_toolchain_vendor() {
     if [[ ! -d toolchain-vendor ]]; then
         echo "Deploying toolchain ${toolchain_vendor}"
-        for mirror in \
-            'https://redirect.armbian.com' \
-            'https://mirrors.tuna.tsinghua.edu.cn/armbian-releases'
-        do
-            rm -rf toolchain-vendor.temp
-            mkdir toolchain-vendor.temp
-            if wget "${mirror}/_toolchain/${toolchain_vendor}.tar.xz" -O - |
-                tar -C toolchain-vendor.temp --strip-components 1 -xJ; then break; fi
-        done
+        rm -rf toolchain-vendor.temp
+        mkdir toolchain-vendor.temp
+        if wget "${armbian_mirror}/_toolchain/${toolchain_vendor}.tar.xz" -O - |
+            tar -C toolchain-vendor.temp --strip-components 1 -xJ; then break; fi
         mv toolchain-vendor{.temp,}
     fi
 }
