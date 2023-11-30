@@ -8,9 +8,46 @@ You can download rkloaders for opi5 family from the [nightly release page](https
 
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
 
+## Image Layout
+The FIP images with vendor u-boot are all 4MiB without compression, and the FIP images with mainline u-boot are all 17MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset.
+
+I've created GPT partition tables and some reserved partitions in them to hint on areas not safe to allocate partitions on. But the partitions are only for hint and only needed on SD/eMMC. Erasing them is OK, as long as you keep the unsafe areas intact.
+
+For vendor images, the GPT table is like the following:
+```
+label: gpt
+label-id: 8E9D799A-1949-431C-8B25-98957E9CD6E3
+device: rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img
+unit: sectors
+first-lba: 34
+last-lba: 8158
+grain: 512
+sector-size: 512
+
+rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=         960, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=AED7228D-AB5B-4E63-9ECA-D88085FB6816, name="idbloader"
+rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img2 : start=        1024, size=        6144, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=9C670590-3F83-4C49-BDAE-ED845121A31B, name="uboot"
+```
+For mainline images, the GPT table is like the following:
+```
+label: gpt
+label-id: 6D063951-6FF1-4F8A-90C6-D168C3F1EE94
+device: rkloader-mainline-master-orangepi-5-rk3588s-r89946.43f2873fa9-bl31-v1.42-ddr-v1.13.img
+unit: sectors
+first-lba: 64
+last-lba: 34782
+sector-size: 512
+
+rkloader-mainline-master-orangepi-5-rk3588s-r89946.43f2873fa9-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=       32704, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=7A521222-6F98-43EC-A49F-69BA2496D13D, name="uboot"
+```
+As long as you don't create a new table, the existing partitions should prevent you from creating partitions on the unsafe areas, namely first 4MiB for vendor and first 16MiB for mainline.
+
+In fact, these partitions are allocated way larger than their underlying data. For vendor, the actual unsafe area is only the first ~2MiB, and for mainline, ~9.1MiB. I created them larger than actual data for future-proof. 
+
+In other word, truncating the image, or re-creating partitions overlapping the existing partitions are both OK, as long as the underlying data are intact.
+
 ## Installation
 
-The rkloader image is always 4MiB and should be stored at the beginning of SPI/SD/eMMC, and  it would therefore make the first 4MiB of your drive not usable for data storage.
+You should write the decompressed image into SPI, SD or eMMC, without any offset. For SPI, the image might seem larger but as the data is only 9.1MiB you don't need to worry about the truncated tail.
 
 As long as there's at least one device containing rkloader then your device should boot, no matter it's the SD card, the eMMC, or the SPI flash. And as all of the opi5 family came with an on-board 16MiB/128Mb SPI flash, I'd always recommend using that for rkloader, to save space on your main system drive.
 
@@ -26,6 +63,8 @@ On the device itself, do it like follows:
     ```
     dd if=rkloader.img of=/dev/mtdblock0 bs=4K
     ```
+    If you're wrting the images with mainline u-boot, `dd` would complain some data being truncated as the space is not enough. You don't need to worry about that as the actual data is only ~9.1MiB. The image is only allocated larger to store a large enough GPT table to hint on unsafe areas. That's of no use for SPI.
+
 Note that:
  - Writting to SPI flash is very slow, ~60KiB/s, take patience
  - The erase block size of the on-board SPI flash is 4K, you can omit `bs=4K` arg but the default 512 block size would result in 8 writes to the same block for one 4K chunk of data, killing its lifespan very fast.
