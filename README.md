@@ -1,12 +1,20 @@
 # Rockchip bootloader FIP images for Orangepi 5 / 5B / 5 plus
 
-**This project is neither affiliated with ArchLinuxARM nor OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
+**This project is not affiliated with OrangePi, it's my personal project and I purchased all the needed hardware by myself.**
+
+This is only bootloader image, the bootloader should work regardless of the distro you're using. However, some distros tend to hack their own u-boot booting scheme and does not follow [U-Boot Standard Boot](https://docs.u-boot.org/en/latest/develop/bootstd.html), including OPi's official images, and many of those popular "ARM-friendly distros". 
+
+So, unless you know the distro you would boot with these bootloader images stick to the mainline booting scheme, you should not rely on the images here. And if you insist on doing so, adapt the booting configuration to the standard boot scheme.
+
+If you're using my pre-built [Arch Linux ARM images](https://github.com/7Ji/orangepi5-archlinuxarm) then the bootloader should work just fine, as I always follow the standard boot scheme.
 
 ## Download
 
 You can download rkloaders for opi5 family from the [nightly release page](https://github.com/7Ji/orangepi5-rkloader/releases/tag/nightly), they're built and pushed everyday and always contain the latest BL31, DDR and u-boot.
 
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
+
+As of writing (2023-12-04), the mainline images boot fine but could not reboot properly. If you're using the SBCs for headless servers, then I would recommend the vendor variant.
 
 ## Image Layout
 The FIP images with vendor u-boot are all 4MiB without compression, and the FIP images with mainline u-boot are all 17MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset.
