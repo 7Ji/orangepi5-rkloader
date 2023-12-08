@@ -16,8 +16,6 @@ _Edit on 2023-12-08: The latest DDR firmware seems to be causing problem on newe
 
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
 
-As of writing (2023-12-04), the mainline images boot fine but could not reboot properly. If you're using the SBCs for headless servers, then I would recommend the vendor variant.
-
 ## Image Layout
 The FIP images with vendor u-boot are all 4MiB without compression, and the FIP images with mainline u-boot are all 17MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset.
 
