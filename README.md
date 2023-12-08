@@ -12,6 +12,8 @@ If you're using my pre-built [Arch Linux ARM images](https://github.com/7Ji/oran
 
 You can download rkloaders for opi5 family from the [nightly release page](https://github.com/7Ji/orangepi5-rkloader/releases/tag/nightly), they're built and pushed everyday and always contain the latest BL31, DDR and u-boot.
 
+_Edit on 2023-12-08: The latest DDR firmware seems to be causing problem on newer batches of the boards. I've tested on 5 (bought 2023-01) and 5Plus (bought 2023-08) and only 5Plus is affecetd. But there were reports to all of the trio. To avoid problems the DDR firmware was locked to v1.11 temporarily._
+
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
 
 As of writing (2023-12-04), the mainline images boot fine but could not reboot properly. If you're using the SBCs for headless servers, then I would recommend the vendor variant.
