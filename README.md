@@ -60,6 +60,8 @@ You should write the decompressed image into SPI, SD or eMMC, without any offset
 As long as there's at least one device containing rkloader then your device should boot, no matter it's the SD card, the eMMC, or the SPI flash. And as all of the opi5 family came with an on-board 16MiB/128Mb SPI flash, I'd always recommend using that for rkloader, to save space on your main system drive.
 
 ### Writing to SPI flash
+**WARNING: Do not use the mainline image on SPI yet, I've omitted the spi building steps and the builder only built SD/eMMC images for mainline for fast testing purposes, this would be fixed later but not on top of my todo list. The vendor images still work as how they worked (on SPI/SD/eMMC).**
+
 Check the user manual of opi5/5b/5plus if you want to write under another Windows/Linux device.
 
 On the device itself, do it like follows:
