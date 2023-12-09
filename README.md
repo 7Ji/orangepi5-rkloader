@@ -81,8 +81,6 @@ On the device itself, do it like follows:
    ```
    dd if=rkloader.img of=/dev/mtdblock0 bs=4K
    ```
-   If you're wrting the images with mainline u-boot, `dd` would complain some data being truncated as the space is not enough. You don't need to worry about that as the actual data is only ~9.1MiB. The image is only allocated larger to store a large enough GPT table to hint on unsafe areas. That's of no use for SPI.
-
 Note that:
  - Writting to SPI flash is very slow, ~60KiB/s, take patience
  - The erase block size of the on-board SPI flash is 4K, you can omit `bs=4K` arg but the default 512 block size would result in 8 writes to the same block for one 4K chunk of data, killing its lifespan very fast.
