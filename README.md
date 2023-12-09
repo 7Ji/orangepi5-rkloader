@@ -63,15 +63,25 @@ As long as there's at least one device containing rkloader then your device shou
 Check the user manual of opi5/5b/5plus if you want to write under another Windows/Linux device.
 
 On the device itself, do it like follows:
- 1. Zero-out the SPI flash before writing to it (`flash_erase` is from package `mtd-utils`):
+1. Zero-out the SPI flash before writing to it (`flash_erase` is from package `mtd-utils`):
     ```
     flash_erase /dev/mtd0 0 0
     ```
- 2. Write the rkloader image to it:
-    ```
-    dd if=rkloader.img of=/dev/mtdblock0 bs=4K
-    ```
-    If you're wrting the images with mainline u-boot, `dd` would complain some data being truncated as the space is not enough. You don't need to worry about that as the actual data is only ~9.1MiB. The image is only allocated larger to store a large enough GPT table to hint on unsafe areas. That's of no use for SPI.
+2. For mainline image only, truncate the image to only keep the first 16MiB. Don't worry about the truncated data, the actual data is only in the first ~9.1Mib. The 17MiB is created to hold a big enough 16MiB partition to hint for potential unsafe areas when you use the image on SD/eMMC only.
+
+   Either
+   ```
+   dd if=rkloader.img.orig of=rkloader.img bs=1M count=16
+   ```
+   Or
+   ```
+   truncate -s 16M rkloader.img
+   ```
+3. Write the rkloader image to it:
+   ```
+   dd if=rkloader.img of=/dev/mtdblock0 bs=4K
+   ```
+   If you're wrting the images with mainline u-boot, `dd` would complain some data being truncated as the space is not enough. You don't need to worry about that as the actual data is only ~9.1MiB. The image is only allocated larger to store a large enough GPT table to hint on unsafe areas. That's of no use for SPI.
 
 Note that:
  - Writting to SPI flash is very slow, ~60KiB/s, take patience
