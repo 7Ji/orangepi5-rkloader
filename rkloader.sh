@@ -17,7 +17,7 @@ toolchain_vendor=${toolchain_vendor:-gcc-linaro-7.4.1-2019.02-x86_64_aarch64-lin
 armbian_mirror=${armbian_mirror:-https://redirect.armbian.com}
 
 # v1.13 seems to be causing problems on newer batches.
-ddr_locked=v1.11
+# ddr_locked=v1.11
 
 gpt_vendor='label: gpt
 first-lba: 34
