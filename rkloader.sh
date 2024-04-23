@@ -89,9 +89,8 @@ prepare_rkbin() {
     rm -rf rkbin
     mkdir rkbin
     git --git-dir rkbin.git --work-tree rkbin checkout -f master
-    rkbin=$(readlink -f rkbin)
-    bl31=$(ls "${rkbin}"/rk35/rk3588_bl31_* | tail -n 1)
-    ddr=$(ls "${rkbin}"/rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_${ddr_locked}* | tail -n 1)
+    bl31=$(readlink -f $(ls rkbin/rk35/rk3588_bl31_* | tail -n 1))
+    ddr=$(readlink -f $(ls rkbin/rk35/rk3588_ddr_lp4_*MHz_lp5_*MHz_v*.bin | sort -k 1.48,1.51 | tail -n 1))
     if [[ -z "${bl31}" ]]; then
         echo 'ERROR: Cannot find latest bl31'
         return 1
@@ -109,7 +108,7 @@ generate_git_version() { #1 git dir, #2 branch
 generate_version() {
     local bl31_ver=${bl31##*bl31_}
     bl31_ver=${bl31_ver%%.elf}
-    local ddr_ver=${ddr##*ddr_lp4_2112MHz_lp5_2736MHz_}
+    local ddr_ver=${ddr##*ddr_lp4_*MHz_lp5_*MHz_}
     ddr_ver=${ddr_ver%%.bin}
     local suffix="-bl31-${bl31_ver}-ddr-${ddr_ver}"
     local uboot_vendor_ver=$(generate_git_version u-boot-vendor.git "${uboot_vendor_branch}")
