@@ -16,19 +16,16 @@ toolchain_vendor=${toolchain_vendor:-gcc-linaro-7.4.1-2019.02-x86_64_aarch64-lin
 
 armbian_mirror=${armbian_mirror:-https://redirect.armbian.com}
 
-# v1.13 seems to be causing problems on newer batches.
-# ddr_locked=v1.11
-
-gpt_vendor='label: gpt
+gpt_spi='label: gpt
 first-lba: 34
 start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
 start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 
-# The image is 9.1 MiB, for safety we have 16 MiB, 
-gpt_mainline='label: gpt
+gpt_mainline_sd='label: gpt
 first-lba: 64
 start=64, size=32704, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 
+mainline_suffixes=(sd.img spi.img emmc-idbloader.img emmc-u-boot.itb)
 
 # Init a repo, we do this in Bash world because we only need minimum config
 init_repo() { # 1: git dir, 2: url, 3: branch
@@ -133,58 +130,86 @@ sha256sums
 \`\`\`" > note.md
 }
 
-build_common() { #1 type #2 git branch #3 config
-    local name=rkloader-"$1-$2-$3"-
-    case "$1" in
-    vendor) name+="${vendor_version}" ;;
-    mainline) name+="${mainline_version}" ;;
-    *)
-        echo "ERROR: Unexpected type $1"
-        return 1
-        ;;
-    esac
-    name+='.img'
-    echo "$1:$3:${name}.gz" >> out/list
+
+build_vendor() { #1 git branch #2 config
+    local name=rkloader-vendor-"$1-$2-${vendor_version}.img"
+    echo "vendor:$2:${name}.gz" >> out/list
     local out_raw=out/"${name}"
     local out="${out_raw}".gz
     outs+=("${out}")
-    local report_name="u-boot ($1) for $3"
+    local report_name="u-boot (vendor) for $2"
     if [[ -f "${out}" ]]; then
         echo "Skipped building ${report_name}"
         return 0
     fi
     mkdir build
-    git --git-dir u-boot-"$1".git --work-tree build checkout -f "$2"
+    git --git-dir u-boot-vendor.git --work-tree build checkout -f "$1"
     echo "Configuring ${report_name}..."
-    make -C build "$3"_defconfig
+    make -C build "$2"_defconfig
     echo "Building ${report_name}..."
     rm -f "${out_raw}"
-    case "$1" in
-    vendor)
-        make -C build \
-            BL31="${bl31}" \
-            -j$(nproc) \
-            spl/u-boot-spl.bin u-boot.dtb u-boot.itb
-        build/tools/mkimage -n rk3588 -T rksd \
-            -d "${ddr}":build/spl/u-boot-spl.bin \
-            build/idbloader.img
-        truncate -s 4M "${out_raw}"
-        sfdisk "${out_raw}" <<< "${gpt_vendor}"
-        dd if=build/idbloader.img of="${out_raw}" seek=64 conv=notrunc
-        dd if=build/u-boot.itb of="${out_raw}" seek=1024 conv=notrunc
-        ;;
-    mainline)
-        make -C build \
-            BL31="${bl31}" \
-            ROCKCHIP_TPL="${ddr}" \
-            -j$(nproc)
-        truncate -s 17M "${out_raw}"
-        sfdisk "${out_raw}" <<< "${gpt_mainline}"
-        dd if=build/u-boot-rockchip.bin of="${out_raw}" seek=64 conv=notrunc
-        ;;
-    esac
+    make -C build \
+        BL31="${bl31}" \
+        -j$(nproc) \
+        spl/u-boot-spl.bin u-boot.dtb u-boot.itb
+    build/tools/mkimage -n rk3588 -T rksd \
+        -d "${ddr}":build/spl/u-boot-spl.bin \
+        build/idbloader.img
+    truncate -s 4M "${out_raw}"
+    sfdisk "${out_raw}" <<< "${gpt_spi}"
+    dd if=build/idbloader.img of="${out_raw}" seek=64 conv=notrunc
+    dd if=build/u-boot.itb of="${out_raw}" seek=1024 conv=notrunc
     gzip -9 --force --suffix '.gz.temp' "${out_raw}" &
     pids_gzip+=($!)
+    rm -rf build
+}
+
+
+build_mainline() { #1 git branch #2 config
+    local prefix=rkloader-mainline-"$1-$2-${mainline_version}"-
+    local suffix=
+    local existing='yes'
+    local out_prefix="out/${prefix}"
+    for suffix in "${mainline_suffixes[@]}"; do
+        local stem="${prefix}${suffix}"
+        echo "mainline:$2:${stem}.gz" >> out/list
+        local out="${out_prefix}${suffix}".gz
+        outs+=("${out}")
+        if [[ ! -f "${out}" ]]; then
+            existing=''
+        fi
+    done
+    local report_name="u-boot (mainline) for $2"
+    if [[ "${existing}" ]]; then
+        echo "Skipped building ${report_name}"
+        return 0
+    fi
+    mkdir build
+    git --git-dir u-boot-mainline.git --work-tree build checkout -f "$1"
+    echo "Configuring ${report_name}..."
+    make -C build "$2"_defconfig
+    echo "Building ${report_name}..."
+    for suffix in "${mainline_suffixes[@]}"; do
+        rm -f "${out_prefix}${suffix}".gz
+    done
+    make V=s -C build \
+        BL31="${bl31}" \
+        ROCKCHIP_TPL="${ddr}" \
+        -j$(nproc)
+    cp build/idbloader.img "${out_prefix}"emmc-idbloader.img
+    cp build/u-boot.itb "${out_prefix}"emmc-u-boot.itb
+    local out_sd="${out_prefix}"sd.img
+    truncate -s 17M "${out_sd}"
+    sfdisk "${out_sd}" <<< "${gpt_mainline_sd}"
+    dd if=build/u-boot-rockchip.bin of="${out_sd}" seek=64 conv=notrunc
+    local out_spi="${out_prefix}"spi.img
+    cp build/u-boot-rockchip-spi.bin "${out_spi}"
+    truncate -s 4M "${out_spi}"
+    sfdisk "${out_spi}" <<< "${gpt_spi}"
+    for suffix in "${mainline_suffixes[@]}"; do
+        gzip -9 --force --suffix '.gz.temp' "${out_prefix}${suffix}" &
+        pids_gzip+=($!)
+    done
     rm -rf build
 }
 
@@ -199,11 +224,11 @@ build_all() {
     export ARCH=arm64
     export PATH="/usr/lib/ccache/bin:${PATH}"
     for config in "${configs_mainline[@]}"; do
-        build_common mainline "${uboot_mainline_branch}" "${config}"
+        build_mainline "${uboot_mainline_branch}" "${config}"
     done
     PATH="/usr/lib/ccache/bin:${PWD}/toolchain-vendor/bin:${path_preserve}"
     for config in "${configs_vendor[@]}"; do
-        build_common vendor "${uboot_vendor_branch}" "${config}"
+        build_vendor "${uboot_vendor_branch}" "${config}"
     done
     PATH="${path_preserve}"
     rm -rf rkbin
