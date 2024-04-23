@@ -23,7 +23,7 @@ start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 
 gpt_mainline_sd='label: gpt
 first-lba: 64
-start=64, size=32704, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
+start=64, size=32671, type=8DA63339-0007-60C0-C436-083AC8230908, name="fit"'
 
 mainline_suffixes=(sd.img spi.img emmc-idbloader.img emmc-u-boot.itb)
 
@@ -132,7 +132,8 @@ sha256sums
 
 
 build_vendor() { #1 git branch #2 config
-    local name=rkloader-vendor-"$1-$2-${vendor_version}.img"
+    local stem="vendor-$1-$2-${vendor_version}"
+    local name=rkloader-"${stem}".img
     echo "vendor:$2:${name}.gz" >> out/list
     local out_raw=out/"${name}"
     local out="${out_raw}".gz
@@ -146,11 +147,15 @@ build_vendor() { #1 git branch #2 config
     git --git-dir u-boot-vendor.git --work-tree build checkout -f "$1"
     echo "Configuring ${report_name}..."
     make -C build "$2"_defconfig
+    pushd build
+    ./scripts/kconfig/merge_config.sh -m .config ../configs/common.config
+    popd
     echo "Building ${report_name}..."
     rm -f "${out_raw}"
     make -C build \
         BL31="${bl31}" \
         -j$(nproc) \
+        olddefconfig \
         spl/u-boot-spl.bin u-boot.dtb u-boot.itb
     build/tools/mkimage -n rk3588 -T rksd \
         -d "${ddr}":build/spl/u-boot-spl.bin \
@@ -161,18 +166,20 @@ build_vendor() { #1 git branch #2 config
     dd if=build/u-boot.itb of="${out_raw}" seek=1024 conv=notrunc
     gzip -9 --force --suffix '.gz.temp' "${out_raw}" &
     pids_gzip+=($!)
+    mv build/.config configs/"${stem}".config
     rm -rf build
 }
 
 
 build_mainline() { #1 git branch #2 config
-    local prefix=rkloader-mainline-"$1-$2-${mainline_version}"-
+    local stem=mainline-"$1-$2-${mainline_version}"
+    local prefix=rkloader-"${stem}"-
     local suffix=
     local existing='yes'
     local out_prefix="out/${prefix}"
     for suffix in "${mainline_suffixes[@]}"; do
-        local stem="${prefix}${suffix}"
-        echo "mainline:$2:${stem}.gz" >> out/list
+        local name="${prefix}${suffix}"
+        echo "mainline:$2:${name}.gz" >> out/list
         local out="${out_prefix}${suffix}".gz
         outs+=("${out}")
         if [[ ! -f "${out}" ]]; then
@@ -188,6 +195,9 @@ build_mainline() { #1 git branch #2 config
     git --git-dir u-boot-mainline.git --work-tree build checkout -f "$1"
     echo "Configuring ${report_name}..."
     make -C build "$2"_defconfig
+    pushd build
+    ./scripts/kconfig/merge_config.sh -m .config ../configs/common.config
+    popd
     echo "Building ${report_name}..."
     for suffix in "${mainline_suffixes[@]}"; do
         rm -f "${out_prefix}${suffix}".gz
@@ -195,11 +205,12 @@ build_mainline() { #1 git branch #2 config
     make V=s -C build \
         BL31="${bl31}" \
         ROCKCHIP_TPL="${ddr}" \
-        -j$(nproc)
+        -j$(nproc) \
+        olddefconfig all
     cp build/idbloader.img "${out_prefix}"emmc-idbloader.img
     cp build/u-boot.itb "${out_prefix}"emmc-u-boot.itb
     local out_sd="${out_prefix}"sd.img
-    truncate -s 17M "${out_sd}"
+    truncate -s 16M "${out_sd}"
     sfdisk "${out_sd}" <<< "${gpt_mainline_sd}"
     dd if=build/u-boot-rockchip.bin of="${out_sd}" seek=64 conv=notrunc
     local out_spi="${out_prefix}"spi.img
@@ -210,6 +221,7 @@ build_mainline() { #1 git branch #2 config
         gzip -9 --force --suffix '.gz.temp' "${out_prefix}${suffix}" &
         pids_gzip+=($!)
     done
+    mv build/.config configs/"${stem}".config
     rm -rf build
 }
 

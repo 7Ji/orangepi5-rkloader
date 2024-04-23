@@ -17,11 +17,13 @@ _Edit on 2023-12-08: The latest DDR firmware seems to be causing problem on newe
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
 
 ## Image Layout
-The FIP images with vendor u-boot are all 4MiB without compression, and the FIP images with mainline u-boot are all 17MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset.
+Vendor images (same image for SPI/SD/eMMC) and mainline SPI image are all 4MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset. 
 
-I've created GPT partition tables and some reserved partitions in them to hint on areas not safe to allocate partitions on. But the partitions are only for hint and only needed on SD/eMMC. Erasing them is OK, as long as you keep the unsafe areas intact.
+Mainline SD image is 17 MiB without compression, it shall be stored at the beginning of your SD.
 
-For vendor images, the GPT table is like the following:
+All of the images contain GPT partition tables and some reserved partitions in them to hint on areas not safe to allocate partitions on. But the partitions are only for hint and only needed on SD/eMMC. Erasing them is OK, as long as you keep the unsafe areas intact.
+
+For mainline SPI and vendor SPI/SD/eMMC images, the GPT table is like the following:
 ```
 label: gpt
 label-id: 8E9D799A-1949-431C-8B25-98957E9CD6E3
@@ -35,7 +37,7 @@ sector-size: 512
 rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=         960, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=AED7228D-AB5B-4E63-9ECA-D88085FB6816, name="idbloader"
 rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img2 : start=        1024, size=        6144, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=9C670590-3F83-4C49-BDAE-ED845121A31B, name="uboot"
 ```
-For mainline images, the GPT table is like the following:
+For mainline SD image, the GPT table is like the following:
 ```
 label: gpt
 label-id: 6D063951-6FF1-4F8A-90C6-D168C3F1EE94
@@ -47,9 +49,9 @@ sector-size: 512
 
 rkloader-mainline-master-orangepi-5-rk3588s-r89946.43f2873fa9-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=       32704, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=7A521222-6F98-43EC-A49F-69BA2496D13D, name="uboot"
 ```
-As long as you don't create a new table, the existing partitions should prevent you from creating partitions on the unsafe areas, namely first 4MiB for vendor and first 16MiB for mainline.
+As long as you don't create a new table, the existing partitions should prevent you from creating partitions on the unsafe areas.
 
-In fact, these partitions are allocated way larger than their underlying data. For vendor, the actual unsafe area is only the first ~2MiB, and for mainline, ~9.1MiB. I created them larger than actual data for future-proof. 
+In fact, these partitions are allocated way larger than their underlying data. For 4MiB, the actual unsafe area is only the first ~2MiB, and for 17MiB, ~9.1MiB. I created them larger than actual data for future-proof. 
 
 In other word, truncating the image, or re-creating partitions overlapping the existing partitions are both OK, as long as the underlying data are intact.
 
