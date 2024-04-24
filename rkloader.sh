@@ -21,11 +21,12 @@ first-lba: 34
 start=64, size=960, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
 start=1024, size=6144, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 
-gpt_mainline_sd='label: gpt
+gpt_mainline_mmc='label: gpt
 first-lba: 64
-start=64, size=32671, type=8DA63339-0007-60C0-C436-083AC8230908, name="fit"'
+start=64, size=8000, type=8DA63339-0007-60C0-C436-083AC8230908, name="idbloader"
+start=16384, size=8192, type=8DA63339-0007-60C0-C436-083AC8230908, name="uboot"'
 
-mainline_suffixes=(sd.img spi.img emmc-idbloader.img emmc-u-boot.itb)
+mainline_suffixes=(sd-emmc.img spi.img idbloader.img u-boot.itb)
 
 # Init a repo, we do this in Bash world because we only need minimum config
 init_repo() { # 1: git dir, 2: url, 3: branch
@@ -206,12 +207,12 @@ build_mainline() { #1 git branch #2 config
         ROCKCHIP_TPL="${ddr}" \
         -j$(nproc) \
         olddefconfig all
-    cp build/idbloader.img "${out_prefix}"emmc-idbloader.img
-    cp build/u-boot.itb "${out_prefix}"emmc-u-boot.itb
-    local out_sd="${out_prefix}"sd.img
-    truncate -s 16M "${out_sd}"
-    sfdisk "${out_sd}" <<< "${gpt_mainline_sd}"
-    dd if=build/u-boot-rockchip.bin of="${out_sd}" seek=64 conv=notrunc
+    cp build/idbloader.img "${out_prefix}"idbloader.img
+    cp build/u-boot.itb "${out_prefix}"u-boot.itb
+    local out_mmc="${out_prefix}"sd-emmc.img
+    truncate -s 13M "${out_mmc}"
+    sfdisk "${out_mmc}" <<< "${gpt_mainline_mmc}"
+    dd if=build/u-boot-rockchip.bin of="${out_mmc}" seek=64 conv=notrunc
     local out_spi="${out_prefix}"spi.img
     cp build/u-boot-rockchip-spi.bin "${out_spi}"
     truncate -s 4M "${out_spi}"

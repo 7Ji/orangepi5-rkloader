@@ -4,7 +4,7 @@
 
 This is only bootloader image, the bootloader should work regardless of the distro you're using. However, some distros tend to hack their own u-boot booting scheme and does not follow [U-Boot Standard Boot](https://docs.u-boot.org/en/latest/develop/bootstd.html), including OPi's official images, and many of those popular "ARM-friendly distros". 
 
-So, unless you know the distro you would boot with these bootloader images stick to the mainline booting scheme, you should not rely on the images here. And if you insist on doing so, adapt the booting configuration to the standard boot scheme.
+So, unless you know the distro you would boot with these bootloader images stick to the mainline booting scheme, you should not rely on the images here. And if you insist on doing so, remember to adapt the booting configuration to the standard boot scheme.
 
 If you're using my pre-built [Arch Linux ARM images](https://github.com/7Ji/orangepi5-archlinuxarm) then the bootloader should work just fine, as I always follow the standard boot scheme.
 
@@ -12,46 +12,47 @@ If you're using my pre-built [Arch Linux ARM images](https://github.com/7Ji/oran
 
 You can download rkloaders for opi5 family from the [nightly release page](https://github.com/7Ji/orangepi5-rkloader/releases/tag/nightly), they're built and pushed everyday and always contain the latest BL31, DDR and u-boot.
 
-_Edit on 2023-12-08: The latest DDR firmware seems to be causing problem on newer batches of the boards. I've tested on 5 (bought 2023-01) and 5Plus (bought 2023-08) and only 5Plus is affecetd. But there were reports to all of the trio. To avoid problems the DDR firmware was locked to v1.11 temporarily._
-
 The downloaded images are compressed with gzip, and you'll need to decompress them before using them.
 
 ## Image Layout
 Vendor images (same image for SPI/SD/eMMC) and mainline SPI image are all 4MiB without compression. They should be stored at the beginning of your SPI/SD/eMMC, without offset. 
 
-Mainline SD image is 17 MiB without compression, it shall be stored at the beginning of your SD.
+Mainline SD/eMMC image is 13 MiB without compression (same image for SD/eMMC, both with `-sd` suffix), it shall be stored at the beginning of your SD or eMMC user area.
 
 All of the images contain GPT partition tables and some reserved partitions in them to hint on areas not safe to allocate partitions on. But the partitions are only for hint and only needed on SD/eMMC. Erasing them is OK, as long as you keep the unsafe areas intact.
 
-For mainline SPI and vendor SPI/SD/eMMC images, the GPT table is like the following:
+_Specially, there are dedicated idbloader and u-boot.itb images that you'll only need if you want to partition the SD/eMMC by yourself and then assemble the bootloader image in place._
+
+For mainline SPI and vendor SPI/SD/eMMC images (4MiB), the GPT table is like the following:
 ```
 label: gpt
-label-id: 8E9D799A-1949-431C-8B25-98957E9CD6E3
-device: rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img
+label-id: CDE728D2-D8FE-2F4D-A850-0700BE72F4B3
+device: rkloader-vendor-v2017.09-rk3588-orangepi_5_plus-r31.7f7ff61a-bl31-v1.45-ddr-v1.16.img
 unit: sectors
 first-lba: 34
 last-lba: 8158
 grain: 512
 sector-size: 512
 
-rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=         960, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=AED7228D-AB5B-4E63-9ECA-D88085FB6816, name="idbloader"
-rkloader-vendor-v2017.09-rk3588-orangepi_5-r20.70b68713-bl31-v1.42-ddr-v1.13.img2 : start=        1024, size=        6144, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=9C670590-3F83-4C49-BDAE-ED845121A31B, name="uboot"
+rkloader-vendor-v2017.09-rk3588-orangepi_5_plus-r31.7f7ff61a-bl31-v1.45-ddr-v1.16.img1 : start=          64, size=         960, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=60AFF2C4-E5DE-5545-88DE-D0EAAA507162, name="idbloader"
+rkloader-vendor-v2017.09-rk3588-orangepi_5_plus-r31.7f7ff61a-bl31-v1.45-ddr-v1.16.img2 : start=        1024, size=        6144, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=52AB3A99-3B2E-F84C-97A4-39FDD1788763, name="uboot"
 ```
-For mainline SD image, the GPT table is like the following:
+For mainline SD/eMMC image (13MiB), the GPT table is like the following:
 ```
 label: gpt
-label-id: 6D063951-6FF1-4F8A-90C6-D168C3F1EE94
-device: rkloader-mainline-master-orangepi-5-rk3588s-r89946.43f2873fa9-bl31-v1.42-ddr-v1.13.img
+label-id: AEA227E4-03AB-4121-A080-89F4E98C57A9
+device: rkloader-mainline-master-orangepi-5-plus-rk3588-r92661.d097f9e129-bl31-v1.45-ddr-v1.16-sd-emmc.img
 unit: sectors
 first-lba: 64
-last-lba: 34782
+last-lba: 26590
 sector-size: 512
 
-rkloader-mainline-master-orangepi-5-rk3588s-r89946.43f2873fa9-bl31-v1.42-ddr-v1.13.img1 : start=          64, size=       32704, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=7A521222-6F98-43EC-A49F-69BA2496D13D, name="uboot"
+rkloader-mainline-master-orangepi-5-plus-rk3588-r92661.d097f9e129-bl31-v1.45-ddr-v1.16-sd-emmc.img1 : start=          64, size=        8000, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=87D7DE44-9EDE-468C-A5D7-C3D2F8598F6D, name="idbloader"
+rkloader-mainline-master-orangepi-5-plus-rk3588-r92661.d097f9e129-bl31-v1.45-ddr-v1.16-sd-emmc.img2 : start=       16384, size=        8192, type=8DA63339-0007-60C0-C436-083AC8230908, uuid=9F496685-FAC8-4814-80C1-21589BE2537D, name="uboot"
 ```
 As long as you don't create a new table, the existing partitions should prevent you from creating partitions on the unsafe areas.
 
-In fact, these partitions are allocated way larger than their underlying data. For 4MiB, the actual unsafe area is only the first ~2MiB, and for 17MiB, ~9.1MiB. I created them larger than actual data for future-proof. 
+In fact, these partitions are allocated way larger than their underlying data. For 4MiB, the actual unsafe area is only the first ~2MiB, and for 13MiB, ~9.3MiB. I created them larger than actual data for future-proof. 
 
 In other word, truncating the image, or re-creating partitions overlapping the existing partitions are both OK, as long as the underlying data are intact.
 
