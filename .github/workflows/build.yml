@@ -18,7 +18,8 @@ jobs:
             device-tree-compiler \
             gcc-aarch64-linux-gnu \
             python2 \
-            python3-pyelftools
+            python3-pyelftools \
+            gnutls-dev
       - name: Restore cached toolchain
         uses: actions/cache/restore@v3
         with:
