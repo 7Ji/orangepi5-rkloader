@@ -9,7 +9,8 @@ uboot_mainline_branch=${uboot_mainline_branch:-master}
 rkbin_repo_url=${rkbin_repo_url:-https://github.com/armbian/rkbin.git}
 rkbin_branch=${rkbin_branch:-master}
 
-configs_vendor=(${configs_vendor:-orangepi_5b orangepi_5 orangepi_5_plus orangepi_5_sata orangepi_5_pro})
+configs_vendor_default=(orangepi_5{,b,_{max,plus,pro,pro_sata,sata,ultra}})
+configs_vendor=(${configs_vendor:-${configs_vendor_default[*]}})
 configs_mainline=(${configs_mainline:-orangepi-5-plus-rk3588 orangepi-5-rk3588s})
 
 toolchain_vendor=${toolchain_vendor:-gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu}
