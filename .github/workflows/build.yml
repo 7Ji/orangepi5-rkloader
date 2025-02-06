@@ -86,7 +86,7 @@ jobs:
           path: out.tar.gz
           key: ${{ runner.os }}-rkloader-${{ hashFiles('out.tar.gz') }}
       - name: Upload all rkloader
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: all
           path: |
